@@ -20,5 +20,4 @@ public class Address {
 
     @Column(nullable = false)
     private Integer homeNumber;
-
 }
