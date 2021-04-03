@@ -2,6 +2,7 @@ package uz.pdp.spring2lesson1task1.service;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import uz.pdp.spring2lesson1task1.entity.Address;
 import uz.pdp.spring2lesson1task1.entity.Worker;
 import uz.pdp.spring2lesson1task1.payload.Result;
 import uz.pdp.spring2lesson1task1.payload.WorkerDTO;
@@ -29,14 +30,15 @@ public class WorkerServiceImpl implements WorkerService {
         if (workerRepository.existsByPhoneNumber(workerDTO.getPhoneNumber())) {
             return ResponseEntity.ok(new Result("Bunday phonenumberli worker bor.", false));
         } else if (departmentRepository.existsById(workerDTO.getDepartment_id())) {
-            if (addressRepository.existsById(workerDTO.getAddress_id())) {
-                Worker worker = new Worker(workerDTO.getName(), workerDTO.getPhoneNumber(),
-                        addressRepository.getOne(workerDTO.getAddress_id()), departmentRepository.getOne(workerDTO.getDepartment_id()));
-                workerRepository.save(worker);
-                return ResponseEntity.ok(new Result("Worker qo'shildi", true));
-            } else {
-                return ResponseEntity.ok(new Result("Bunday idli adress yoq'", false));
-            }
+            Address address = new Address();
+            address.setHomeNumber(workerDTO.getHomeNumber());
+            address.setStreet(workerDTO.getStreet());
+            Address savedAddress = addressRepository.save(address);
+            Worker worker = new Worker(workerDTO.getName(), workerDTO.getPhoneNumber(),
+                    savedAddress, departmentRepository.getOne(workerDTO.getDepartment_id()));
+            workerRepository.save(worker);
+            return ResponseEntity.ok(new Result("Worker qo'shildi", true));
+
         } else {
             return ResponseEntity.ok(new Result("Bunday idli departament yo'q", false));
 
@@ -60,17 +62,19 @@ public class WorkerServiceImpl implements WorkerService {
     public ResponseEntity<Result> update(WorkerDTO workerDTO, Integer id) {
         if (workerRepository.existsById(id)) {
             if (departmentRepository.existsById(workerDTO.getDepartment_id())) {
-                if (addressRepository.existsById(workerDTO.getAddress_id())) {
-                    Worker worker = workerRepository.getOne(id);
-                    worker.setName(workerDTO.getName());
-                    worker.setPhoneNumber(workerDTO.getPhoneNumber());
-                    worker.setAddress(addressRepository.getOne(workerDTO.getAddress_id()));
-                    worker.setDepartment(departmentRepository.getOne(workerDTO.getDepartment_id()));
-                    workerRepository.save(worker);
-                    return ResponseEntity.ok(new Result("Worker o'zgartirildi", true));
-                } else {
-                    return ResponseEntity.ok(new Result("Bunday idli adress yo'q", false));
-                }
+                Worker worker = workerRepository.getOne(id);
+                worker.setName(workerDTO.getName());
+                worker.setPhoneNumber(workerDTO.getPhoneNumber());
+
+                Address address = new Address();
+                address.setHomeNumber(workerDTO.getHomeNumber());
+                address.setStreet(workerDTO.getStreet());
+                Address savedAddress = addressRepository.save(address);
+
+                worker.setAddress(savedAddress);
+                worker.setDepartment(departmentRepository.getOne(workerDTO.getDepartment_id()));
+                workerRepository.save(worker);
+                return ResponseEntity.ok(new Result("Worker o'zgartirildi", true));
             } else {
                 return ResponseEntity.ok(new Result("Bunday idli department yo'q", false));
             }
